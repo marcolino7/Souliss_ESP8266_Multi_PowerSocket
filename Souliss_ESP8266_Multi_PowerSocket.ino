@@ -10,8 +10,8 @@
 // Ultima cifra dell'indirizzo IP
 #define IP_ADDRESS 135
 
-#define HOST_NAME_INSKETCH
-#define HOST_NAME "pwrskt05"
+//#define HOST_NAME_INSKETCH
+//#define HOST_NAME "pwrskt05"
 
 // Configure the framework
 #include "bconf/MCU_ESP8266.h"              // Load the code directly on the ESP8266
@@ -30,6 +30,7 @@
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 #include <EEPROM.h>
+#include <ArduinoOTA.h>
 #include "Souliss.h"
 
 // Define the network configuration according to your router settings
@@ -61,7 +62,6 @@ byte led_status = 0;
 byte joined = 0;
 U8 value_hold=0x068;
 
-OTA_Setup();
 
 void setup()
 {   
@@ -86,7 +86,9 @@ void setup()
 	Set_SimpleLight(T_RELE_4);			// Define a T11 light logic
 	Souliss_SetT13(memory_map, T_IN_1);
   
-	OTA_Init();
+	// Init the OTA
+	ArduinoOTA.setHostname("pwrskt05");
+	ArduinoOTA.begin();
 
 	Serial.begin(115200);
     Serial.println("Node Init");
@@ -148,7 +150,8 @@ void loop()
 
         FAST_PeerComms();                                        
     }
-	OTA_Process();
+	// Look for a new sketch to update over the air
+	ArduinoOTA.handle();
 } 
 
 //This routine check for peer is joined to Souliss Network
