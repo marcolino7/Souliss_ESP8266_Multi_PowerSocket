@@ -8,7 +8,8 @@
         
 ***************************************************************************/
 // Ultima cifra dell'indirizzo IP
-#define IP_ADDRESS 135
+#define IP_ADDRESS	135
+#define HOSTNAME	"pwrskt05"
 
 //#define HOST_NAME_INSKETCH
 //#define HOST_NAME "pwrskt05"
@@ -87,7 +88,7 @@ void setup()
 	Souliss_SetT13(memory_map, T_IN_1);
   
 	// Init the OTA
-	ArduinoOTA.setHostname("pwrskt05");
+	ArduinoOTA.setHostname(HOSTNAME);
 	ArduinoOTA.begin();
 
 	Serial.begin(115200);
