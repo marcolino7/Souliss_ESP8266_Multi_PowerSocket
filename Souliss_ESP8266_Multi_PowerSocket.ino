@@ -11,8 +11,9 @@
 #define IP_ADDRESS	135
 #define HOSTNAME	"pwrskt05"
 
-//#define HOST_NAME_INSKETCH
-//#define HOST_NAME "pwrskt05"
+#define	VNET_RESETTIME_INSKETCH
+#define VNET_RESETTIME			0x00042F7	// ((20 Min*60)*1000)/70ms = 17143 => 42F7
+#define VNET_HARDRESET			ESP.reset()
 
 // Configure the framework
 #include "bconf/MCU_ESP8266.h"              // Load the code directly on the ESP8266
@@ -45,7 +46,7 @@ uint8_t ip_gateway[4]  = {192, 168, 1, 1};
 #define T_RELE_2	1      
 #define T_RELE_3	2      
 #define T_RELE_4	3      
-#define T_IN_1	4      
+#define T_IN_1		4      
      
 
 // **** Define here the right pin for your ESP module **** 
@@ -66,7 +67,8 @@ U8 value_hold=0x068;
 
 void setup()
 {   
-   Initialize();
+	delay((IP_ADDRESS - 128) * 5000);
+    Initialize();
 
 	//Pin Setup
 	pinMode(PIN_RELE_1, OUTPUT);
