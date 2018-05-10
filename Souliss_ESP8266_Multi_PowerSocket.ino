@@ -42,12 +42,16 @@ uint8_t ip_gateway[4]  = {192, 168, 1, 1};
 
 
 // This identify the number of the Slot
-#define T_RELE_1	0      
-#define T_RELE_2	1      
-#define T_RELE_3	2      
-#define T_RELE_4	3      
-#define T_IN_1		4      
-     
+#define T_RELE_1		0      
+#define T_RELE_2		1      
+#define T_RELE_3		2      
+#define T_RELE_4		3      
+#define T_IN_1			4
+#define T_WIFI_STRDB	5	//It takes 2 slots
+#define T_WIFI_STR		7	//It takes 2 slots
+
+//Deadband for analog values
+#define NODEADBAND		0				//Se la variazione è superio del 0,1% aggiorno    
 
 // **** Define here the right pin for your ESP module **** 
 #define	PIN_RELE_1	5
@@ -64,6 +68,9 @@ byte led_status = 0;
 byte joined = 0;
 U8 value_hold=0x068;
 
+//Variable to Handle WiFio Signal
+long rssi = 0;
+int bars = 0;
 
 void setup()
 {   
@@ -88,6 +95,8 @@ void setup()
 	Set_SimpleLight(T_RELE_3);			// Define a T11 light logic
 	Set_SimpleLight(T_RELE_4);			// Define a T11 light logic
 	Souliss_SetT13(memory_map, T_IN_1);
+	Souliss_SetT51(memory_map, T_WIFI_STRDB);	//Imposto il tipico per contenere il segnale del Wifi in decibel
+	Souliss_SetT51(memory_map, T_WIFI_STR);	//Imposto il tipico per contenere il segnale del Wifi in barre da 1 a 5
   
 	// Init the OTA
 	ArduinoOTA.setHostname(HOSTNAME);
@@ -145,17 +154,60 @@ void loop()
       Souliss_Logic_T13(memory_map, T_IN_1, &data_changed);
 
 		}
-
+		FAST_210ms() {
+			//Processa le logiche per il segnale WiFi
+			Souliss_Logic_T51(memory_map, T_WIFI_STRDB, NODEADBAND, &data_changed);
+			Souliss_Logic_T51(memory_map, T_WIFI_STR, NODEADBAND, &data_changed);
+		}
 		FAST_510ms() {
 			//Check if joined to gateway
 			check_if_joined();
 		}
 
-        FAST_PeerComms();                                        
+        FAST_PeerComms();
+		ArduinoOTA.handle();
     }
-	// Look for a new sketch to update over the air
-	ArduinoOTA.handle();
+	EXECUTESLOW() {
+		UPDATESLOW();
+		SLOW_10s() {
+			//Check wifi signal
+			check_wifi_signal();
+		}
+	}
 } 
+
+void check_wifi_signal() {
+	rssi = WiFi.RSSI();
+
+	if (rssi > -55) {
+		bars = 5;
+	}
+	else if (rssi < -55 & rssi >= -65) {
+		bars = 4;
+	}
+	else if (rssi < -65 & rssi >= -70) {
+		bars = 3;
+	}
+	else if (rssi < -70 & rssi >= -78) {
+		bars = 2;
+	}
+	else if (rssi < -78 & rssi > -82) {
+		bars = 1;
+	}
+	else {
+		bars = 0;
+	}
+	float f_rssi = (float)rssi;
+	float f_bars = (float)bars;
+	Souliss_ImportAnalog(memory_map, T_WIFI_STRDB, &f_rssi);
+	Souliss_ImportAnalog(memory_map, T_WIFI_STR, &f_bars);
+#ifdef SERIAL_DEBUG
+	Serial.print("wifi rssi:");
+	Serial.println(rssi);
+	Serial.print("wifi bars:");
+	Serial.println(bars);
+#endif
+}
 
 //This routine check for peer is joined to Souliss Network
 //If not blink the led every 500ms, else led is a mirror of rel� status
